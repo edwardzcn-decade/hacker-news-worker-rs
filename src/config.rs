@@ -1,0 +1,1 @@
+pub const LIMIT_DEFAULT: u16 = 20;

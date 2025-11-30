@@ -1,29 +1,21 @@
+pub mod api;
+pub mod config;
+
 use axum::{
     extract::Path,
     http::{StatusCode, Uri},
     response::{IntoResponse, Redirect},
     routing::get,
-    Router,
+    Json, Router,
 };
 use std::str::FromStr;
 use tower_service::Service;
 
-use serde::{Deserialize, Serialize};
+use api::hn::LiveDataKey;
+use config::LIMIT_DEFAULT;
+
 use tracing::{error, trace};
 use worker::*;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum LiveDataKey {
-    MaxItem,
-    TopHn,
-    NewHn,
-    BestHn,
-    AskHn,
-    ShowHn,
-    JobHn,
-    Updates,
-}
 
 impl LiveDataKey {
     pub fn as_str(&self) -> &'static str {
@@ -64,6 +56,7 @@ fn router() -> Router {
         .route("/blog", get(get_blog))
         .route("/forward/{key}", get(get_forward_key))
         .route("/forward/{item}/{id}", get(get_forward_item))
+        .route("/test", get(test_job_handler))
         .fallback(fallback_handler)
     // .with_state(state)
 }
@@ -78,22 +71,22 @@ async fn fetch(
 }
 
 pub async fn get_root() -> &'static str {
-    trace!("Trigger get_root");
+    console_log!("Trigger get_root");
     "Hello Axum!"
 }
 
 pub async fn get_about() -> impl IntoResponse {
-    trace!("Trigger get_about");
+    console_log!("Trigger get_about");
     (StatusCode::OK, "Hey this is about page into response").into_response()
 }
 
 pub async fn get_blog() -> impl IntoResponse {
-    trace!("Trigger get_blog");
+    console_log!("Trigger get_blog");
     Redirect::to("https://edwardzcn.me").into_response()
 }
 
 pub async fn get_forward_key(Path(key): Path<LiveDataKey>) -> impl IntoResponse {
-    trace!("Trigger post_forward_key");
+    console_log!("Trigger post_forward_key");
     let k = match key {
         LiveDataKey::MaxItem => "maxitem",
         LiveDataKey::TopHn => "topstories",
@@ -110,10 +103,10 @@ pub async fn get_forward_key(Path(key): Path<LiveDataKey>) -> impl IntoResponse 
 }
 
 pub async fn get_forward_item(Path((item, id)): Path<(String, u64)>) -> impl IntoResponse {
-    trace!("Trigger post_forward_item");
+    console_log!("Trigger post_forward_item");
     if item != "item" {
         let msg = "Only forward/item/<number> is allowed";
-        error!(msg);
+        console_error!("{}", msg);
         return (StatusCode::BAD_REQUEST, msg).into_response();
     }
     // item id url
@@ -122,10 +115,23 @@ pub async fn get_forward_item(Path((item, id)): Path<(String, u64)>) -> impl Int
         .into_response()
 }
 
-// TODO
-pub async fn post_forward() -> impl IntoResponse {}
+pub async fn test_job_handler() -> impl IntoResponse {
+    console_log!("[Job TG] Fetch top stories without shards with Hacker News API");
+    let top_items = api::hn::fetch_top(Some(LIMIT_DEFAULT)).await;
+    match top_items {
+        Ok(v) => {
+            console_warn!("Test");
+            (StatusCode::OK, Json(v)).into_response()
+        }
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Saaaaad Test {}", e.to_string()),
+        )
+            .into_response(),
+    }
+}
 
 pub async fn fallback_handler(uri: Uri) -> impl IntoResponse {
-    trace!("Trigger fallback_handler");
+    console_log!("Trigger fallback_handler");
     (StatusCode::NOT_FOUND, format!("404 Not Found: {}", uri))
 }
