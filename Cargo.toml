@@ -1,0 +1,17 @@
+[package]
+authors = ["edwardzcn-decade <edwardzcn98@gmail.com>"]
+edition = "2021"
+name = "rs-axum-demo"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+axum = {version = "0.8", default-features = false}
+serde = {version = "1.0.228", features = ["derive"]}
+tower-service = "0.3.3"
+tracing = "0.1.43"
+wasm-bindgen = "=0.2.106"
+worker = {version = "0.7", features = ['http', 'axum']}
+worker-macros = {version = "0.7", features = ['http']}
