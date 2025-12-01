@@ -1,5 +1,3 @@
-use std::vec;
-
 use crate::config::LIMIT_DEFAULT;
 use axum::Error;
 use serde::{Deserialize, Serialize};
@@ -56,6 +54,37 @@ pub enum LiveDataTypes {
     ShowHn,
     JobHn,
     Updates,
+}
+impl LiveDataKey {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            LiveDataKey::MaxItem => "max_item",
+            LiveDataKey::TopHn => "top_hn",
+            LiveDataKey::NewHn => "new_hn",
+            LiveDataKey::BestHn => "best_hn",
+            LiveDataKey::AskHn => "ask_hn",
+            LiveDataKey::ShowHn => "show_hn",
+            LiveDataKey::JobHn => "job_hn",
+            LiveDataKey::Updates => "updates",
+        }
+    }
+}
+
+impl std::str::FromStr for LiveDataKey {
+    type Err = String;
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s {
+            "max_item" => Ok(LiveDataKey::MaxItem),
+            "top_hn" => Ok(LiveDataKey::TopHn),
+            "new_hn" => Ok(LiveDataKey::NewHn),
+            "best_hn" => Ok(LiveDataKey::BestHn),
+            "ask_hn" => Ok(LiveDataKey::AskHn),
+            "show_hn" => Ok(LiveDataKey::ShowHn),
+            "job_hn" => Ok(LiveDataKey::JobHn),
+            "updates" => Ok(LiveDataKey::Updates),
+            _ => Err(format!("Unknown LiveDataKey: {}", s)),
+        }
+    }
 }
 pub type LiveDataKey = LiveDataTypes;
 

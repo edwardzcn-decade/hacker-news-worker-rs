@@ -1,6 +1,22 @@
-name = "rs-axum-demo"
+compatibility_date = "2025-12-01"
 main = "build/index.js"
-compatibility_date = "2025-11-30"
+name = "rs-axum-demo"
+
+[triggers]
+crons = ["*/10 * * * *", "30 9 * * mon,wed,fri"]
+
+[vars]
+EMAIL_FROM = "sender_address@example.me"
+EMAIL_TO = "verified_email_address@example.com"
+TG_CHAT_ID = "@hacker_news_summary"
+
+[[kv_namespaces]]
+binding = "HACKER_NEWS_WORKER"
+id = "b02cf94318b84768b7b2f60029feb958"
+
+[[send_email]]
+destination_address = "verified_email_address@example.com"
+name = "HACKER_NEWS_EMAIL"
 
 [build]
 command = "cargo install -q worker-build@^0.7 && worker-build --release"
