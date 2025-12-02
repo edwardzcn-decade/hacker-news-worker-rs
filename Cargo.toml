@@ -1,7 +1,7 @@
 [package]
 authors = ["edwardzcn-decade <edwardzcn98@gmail.com>"]
 edition = "2021"
-name = "rs-axum-demo"
+name = "hacker-news-worker-rs"
 version = "0.1.0"
 
 [lib]
