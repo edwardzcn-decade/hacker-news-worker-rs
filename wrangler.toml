@@ -11,8 +11,8 @@ EMAIL_TO = "verified_email_address@example.com"
 TG_CHAT_ID = "@hacker_news_summary"
 
 [[kv_namespaces]]
-binding = "HACKER_NEWS_WORKER"
-id = "b02cf94318b84768b7b2f60029feb958"
+binding = "HACKER_NEWS_WORKER_RS"
+id = "4dd3c61c436b497aa54b4dcf035aa9da"
 
 [[send_email]]
 destination_address = "verified_email_address@example.com"

@@ -1,4 +1,9 @@
+# Personal
+.DS_Store
+example.txt
+example.txt.sig
 target
 node_modules
 .wrangler
 Cargo.lock
+.env

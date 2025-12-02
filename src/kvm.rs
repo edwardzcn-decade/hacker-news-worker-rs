@@ -98,20 +98,21 @@ impl KVManager {
             console_warn!("KVManager] ⚠️ List once cached keys with prefix:{} overflow limit, some keys may missing. Should use listAll instead.", prefix)
         }
         let names: Vec<String> = res.keys.iter().map(|k| k.name.clone()).collect();
-        let metas: Vec<_> = res.keys.iter().map(|k| k.metadata.clone()).collect();
+        // TODO unused metas
+        let _metas: Vec<_> = res.keys.iter().map(|k| k.metadata.clone()).collect();
         Ok(names)
     }
 
     pub async fn list_all(
         &self,
-        prefix: Option<&str>,
-        cursor: Option<&str>,
+        _prefix: Option<&str>,
+        _cursor: Option<&str>,
     ) -> Result<Vec<String>> {
         // TODO
         Ok(vec![])
     }
 
-    fn check_meta_limit<T>(&self, meta: &T) -> bool
+    fn check_meta_limit<T>(&self, _meta: &T) -> bool
     where
         T: Serialize,
     {
