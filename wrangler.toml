@@ -1,6 +1,6 @@
 compatibility_date = "2025-12-01"
 main = "build/index.js"
-name = "rs-axum-demo"
+name = 'hacker-news-worker-rs'
 
 [triggers]
 crons = ["*/10 * * * *", "30 9 * * mon,wed,fri"]

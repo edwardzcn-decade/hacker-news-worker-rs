@@ -1,0 +1,51 @@
+name: Build Rust Worker and Deploy to Cloudflare
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Test Cargo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --all-features
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Install Rust Toolchain
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      # # Cache?
+      # - name: Cache cargo registry
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       ~/.cargo/registry
+      #       ~/.cargo/git
+      #     key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      # Build worker
+      - name: Build wasm
+        run: |
+          cargo install -q worker-build@^0.7 && worker-build --release
+
+      # Deploy (with wrangler-action)
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3.14
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_DEPLOY_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
