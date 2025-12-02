@@ -72,10 +72,11 @@ pub async fn run_telegram_job(env: Env, _shards: Option<u16>) -> Result<()> {
         // TODO no parallel
         // TODO make prefix factory
         let kk = format!("{}{}", hn_prefix, item.item_id);
-        let vv = stringify!(item);
-        console_log!("[Job TG] Try cache key:{kk} value:{vv} with test meta and default ttl",);
-        // TODO change this
-        kvm.create(kk, vv, Some(vv), None).await?;
+        let vv = serde_json::to_string(item)?;
+        console_log!("[Job TG] Try cache key:{} value:{} with test meta and default ttl",&kk, &vv);
+        // TODO change this reset meta
+        let metas = "TODO";
+        kvm.create(kk, vv, Some(metas), None).await?;
     }
 
     notify_all(env, filtered_items, None).await?;
@@ -149,14 +150,14 @@ async fn notify_tg(
                 || "Read",
                 |_| "Read HN",
             ),
-            "url": story_url.clone(),
+            "url": story_url.as_str(),
         },
         {
             "text": cc_option.map_or_else(
                 || "Comments".to_string(),
                 |cc| format!("Comments {}+", cc),
             ),
-            "url": short_hn_url.clone(),
+            "url": short_hn_url.as_str(),
         },
     ]);
     let reply_markup = serde_json::json!({
@@ -207,7 +208,7 @@ fn build_tg_message(
         .unwrap_or_default();
     let by_part = format!("by {}", payload.by);
 
-    write!(&mut msg, "<b>{}</b> ${}", title, status_emoji);
+    write!(&mut msg, "<b>{}</b> {}", title, status_emoji);
     if score_part.is_empty() {
         write!(&mut msg, "\n({})", by_part);
     } else {

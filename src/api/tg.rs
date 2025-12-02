@@ -30,8 +30,11 @@ pub async fn send_message(
     {
         let headers = req.headers_mut()?;
         headers.set("User-Agent", APP_USER_AGENT)?;
-        headers.set("Accept", "application/json")?;
+        headers.set("Content-Type", "application/json")?;
     }
-    let res = Fetch::Request(req).send().await?;
+    let mut res = Fetch::Request(req).send().await?;
+    let status = res.status_code();
+    let body = &res.text().await.unwrap_or_default();
+    console_log!("[TG SendMessage] status:{} body:{}", status, body);
     Ok(res)
 }
