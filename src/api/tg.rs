@@ -11,7 +11,6 @@ pub async fn send_message(
     msg: &str,
     reply_markup: Value,
 ) -> Result<Response, Error> {
-    console_log!("In send_message msg:{}", msg);
     let url = Url::parse(format!("{}bot{}/sendMessage", TG_BASE_URL, token).as_str())?;
     let payload = serde_json::json!({
       "chat_id": chat_id,

@@ -1,7 +1,7 @@
 use crate::config::{APP_USER_AGENT, LIMIT_DEFAULT};
 use serde::{Deserialize, Serialize};
 use worker::{
-    console_error, console_log, console_warn, Error, Fetch, Method, Request, Response, Url,
+    console_error, console_log, Error, Fetch, Method, Request, Response, Url,
 };
 
 const HN_BASE_URL: &str = "https://hacker-news.firebaseio.com/v0/";
@@ -95,22 +95,22 @@ impl std::str::FromStr for LiveDataKey {
 }
 pub type LiveDataKey = LiveDataTypes;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct LiveDataConfig {
-    endpoint: String,
-    label: String,
-    description: Option<String>,
-    default_limit: Option<u16>,
-    default_score: Option<u16>,
-}
+//// Unused LiveDataConfig type
+// #[derive(Debug, Clone, Deserialize, Serialize)]
+// pub struct LiveDataConfig {
+//     endpoint: String,
+//     label: String,
+//     description: Option<String>,
+//     default_limit: Option<u16>,
+//     default_score: Option<u16>,
+// }
 
-pub type LiveDataValue = LiveDataConfig;
+// pub type LiveDataValue = LiveDataConfig;
 
 // Get top stories with no shards
 pub async fn fetch_top_items(limit: Option<u16>) -> Result<Vec<HackerNewsItem>, Error> {
     let limit = limit.unwrap_or(LIMIT_DEFAULT);
     let ids = fetch_top_stories(Some(limit)).await?;
-    console_warn!("In fetch_top ids:{:?}", ids);
     let items = fetch_items(&ids).await?;
     Ok(items)
 }
@@ -120,7 +120,6 @@ async fn fetch_json_response(base: &str, endpoint: &str) -> Result<Response, Err
         format!("{}{}", base, endpoint).as_str(),
         &[("print", "pretty")],
     )?;
-    console_warn!("In fetch_json_response url:{:?}", url);
     let mut req = Request::new(url.as_str(), Method::Get)?;
     {
         let headers = req.headers_mut()?;
@@ -135,37 +134,37 @@ pub async fn fetch_max_item() -> Result<u64, Error> {
     let endpoint = "maxitem.json";
     let mut res = fetch_json_response(HN_BASE_URL, endpoint).await?;
     if !(200..300).contains(&res.status_code()) {
-        console_error!("In fetch_max_item. Failed to fetch max item id");
-        return Err(Error::RustError("failed to fetch max item".into()));
+        console_error!("[HN API] ❌ Failed to fetch max item id");
+        return Err(Error::RustError(
+            "Error message: Hacker News(HN) api wrapper failed to fetch max item".into(),
+        ));
     }
     let m = res.json::<u64>().await?;
     Ok(m)
 }
 
 pub async fn fetch_top_stories(limit: Option<u16>) -> Result<Vec<u64>, Error> {
-    // TODO add limit
+    let limit = limit.unwrap_or(LIMIT_DEFAULT);
     let endpoint = "topstories.json";
     let mut res = fetch_json_response(HN_BASE_URL, endpoint).await?;
     if !(200..300).contains(&res.status_code()) {
         console_error!(
-            "In fetch_top_stories. Failed to fetch top stories with status:{:?}",
+            "[HN API] ❌ Failed to fetch top stories with status:{}",
             &res.status_code()
         );
-        return Err(Error::RustError("failed to fetch top stories".into()));
+        return Err(Error::RustError(
+            "Error message: Hacker News(HN) api wrapper failed to fetch top stories".into(),
+        ));
     }
     let mut v = res.json::<Vec<u64>>().await?;
-    // FIXME hard code limit_default
-    v.truncate(limit.unwrap_or(20).into());
+    v.truncate(limit.into());
     Ok(v)
-    // Only test
-    // Ok(vec![46103532, 46101492, 46100323, 46106556, 46106132])
 }
 
 pub async fn fetch_items(ids: &[u64]) -> Result<Vec<HackerNewsItem>, Error> {
     let mut items = Vec::with_capacity(ids.len());
     for &id in ids {
         let item = fetch_item(id).await?;
-        console_log!("Get item:{:?}", item);
         items.push(item);
     }
     Ok(items)
@@ -176,16 +175,19 @@ pub async fn fetch_item(id: u64) -> Result<HackerNewsItem, Error> {
     let mut res = fetch_json_response(HN_BASE_URL, &endpoint).await?;
     if !(200..300).contains(&res.status_code()) {
         console_error!(
-            "In fetch_item. Failed to fetch single item id:{} with status:{}",
+            "[HN API] ❌ Failed to fetch item. id:{}, status:{}",
             id,
             &res.status_code()
         );
         return Err(Error::RustError(
-            format!("failed to fetch single item id:{}", id).into(),
+            format!(
+                "Error message: Hacker News(HN) api wrapper failed to fetch single item id:{}",
+                id
+            )
+            .into(),
         ));
     }
     let hn_item = res.json::<HackerNewsItem>().await?;
+    console_log!("[HN API] Fetch item from endpoint:{}. score:{:?}", &endpoint, &hn_item.score);
     Ok(hn_item)
-    // Only for test
-    // Ok(HackerNewsItem::mock())
 }

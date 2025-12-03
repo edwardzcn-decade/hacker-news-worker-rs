@@ -8,22 +8,23 @@ use worker::{console_log, console_warn};
 use crate::api::hn::LiveDataKey;
 
 pub async fn get_root() -> &'static str {
-    console_log!("Trigger get_root");
+    console_log!("[Router] Trigger get_root");
     "Hello Axum!"
 }
 
 pub async fn get_about() -> impl IntoResponse {
-    console_log!("Trigger get_about");
+    console_log!("[Router] Trigger get_about");
     (StatusCode::OK, "Hey this is about page into response").into_response()
 }
 
 pub async fn get_blog() -> impl IntoResponse {
-    console_log!("Trigger get_blog");
+    console_log!("[Router] Trigger get_blog");
+    // TODO, change Redirect to calling hacker news api
     Redirect::to("https://edwardzcn.me").into_response()
 }
 
 pub async fn get_forward_key(Path(key): Path<LiveDataKey>) -> impl IntoResponse {
-    console_log!("Trigger post_forward_key");
+    console_log!("[Router] Trigger post_forward_key");
     let k = match key {
         LiveDataKey::MaxItem => "maxitem",
         LiveDataKey::TopHn => "topstories",
@@ -40,19 +41,18 @@ pub async fn get_forward_key(Path(key): Path<LiveDataKey>) -> impl IntoResponse 
 }
 
 pub async fn get_forward_item(Path((item, id)): Path<(String, u64)>) -> impl IntoResponse {
-    console_log!("Trigger post_forward_item");
+    console_log!("[Router] Trigger post_forward_item");
     if item != "item" {
         let msg = "Only forward/item/<number> is allowed";
-        console_warn!("{}", msg);
+        console_warn!("[Router] ⚠️ {}", msg);
         return (StatusCode::BAD_REQUEST, msg).into_response();
     }
-    // item id url
     // TODO, change Redirect to calling hacker news api
     Redirect::to(format!("https://hacker-news.firebaseio.com/v0/{}/{}.json", item, id).as_str())
         .into_response()
 }
 
 pub async fn fallback_handler(uri: Uri) -> impl IntoResponse {
-    console_log!("Trigger fallback_handler");
+    console_log!("[Router] Trigger fallback_handler");
     (StatusCode::NOT_FOUND, format!("404 Not Found: {}", uri))
 }

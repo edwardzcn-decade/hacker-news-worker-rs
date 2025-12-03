@@ -2,6 +2,31 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use worker::*;
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct KVMeta {
+    uuid: String,
+    llm_summary: Option<String>,
+    llm_score: Option<String>,
+}
+
+impl KVMeta {
+    pub fn new(uuid: impl Into<String>) -> Self {
+        Self {
+            uuid: uuid.into(),
+            llm_summary: None,
+            llm_score: None,
+        }
+    }
+    pub fn with_llm_summary(&mut self, llm_summary: Option<String>) -> &mut Self {
+        self.llm_summary = llm_summary;
+        self
+    }
+    pub fn with_llm_score(&mut self, llm_score: Option<String>) -> &mut Self {
+        self.llm_score = llm_score;
+        self
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct KVManager {
     kv: KvStore,
@@ -32,9 +57,8 @@ impl KVManager {
         let mgr = KVManager::new(kv, p, k, v);
         match mgr.kv.get(&mgr.ttl_key).text().await? {
             None => {
-                // TODO
                 console_log!(
-                    "[KVManager] Init key key:{}  value:{}",
+                    "[KVManager] Init key key:{} value:{} in KVManager init",
                     mgr.ttl_key,
                     mgr.ttl_val
                 );
@@ -46,7 +70,7 @@ impl KVManager {
             }
             Some(cur) => {
                 console_log!(
-                    "[KVManager] Rewrite key:{}  value:{}->{}",
+                    "[KVManager] ⚠️ Rewrite key:{} value:{}->{} in KVManager init",
                     mgr.ttl_key,
                     cur,
                     mgr.ttl_val
@@ -95,7 +119,7 @@ impl KVManager {
             .await?;
         if !res.list_complete {
             // Warning for insufficient list but do nothing
-            console_warn!("KVManager] ⚠️ List once cached keys with prefix:{} overflow limit, some keys may missing. Should use listAll instead.", prefix)
+            console_warn!("[KVManager] ⚠️ List once cached keys with prefix:{} overflow limit, some keys may missing. Should use listAll instead.", prefix)
         }
         let names: Vec<String> = res.keys.iter().map(|k| k.name.clone()).collect();
         // TODO unused metas
@@ -138,8 +162,8 @@ impl KVManager {
         if let Some(ref m) = meta {
             if !self.check_meta_limit(m) {
                 console_warn!(
-                    "[KVManager] ⚠️ Metadata {:?} too large for key:{}. Build {{ }} metadata. Please check.",
-                    meta,
+                    "[KVManager] ⚠️ Metadata {:?} too large for key:{}. Please check.",
+                    m,
                     k,
                 );
                 builder = builder.metadata(serde_json::json!({}))?

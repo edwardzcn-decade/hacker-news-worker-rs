@@ -31,20 +31,20 @@ async fn fetch(
 }
 
 #[event(scheduled)]
-async fn scheduled(event: ScheduledEvent, _env: Env, _ctx: ScheduleContext) {
+async fn scheduled(event: ScheduledEvent, env: Env, _ctx: ScheduleContext) {
     console_log!(
         "[Scheduled] Scheduled event triggered at: {}",
         js_sys::Date::new_0().to_iso_string()
     );
     match event.cron().as_str() {
         "*/10 * * * *" => {
-            if let Err(e) = scheduled::run_telegram_job(_env, None).await {
-                // TODO consider catch error here or inside
-                console_error!("{:?}", e);
+            if let Err(e) = scheduled::run_telegram_job(env, None).await {
+                console_error!("[Scheduled] ❌ Catch Error: {}", e);
             }
         }
         "30 9 * * mon,wed,fri" => {
-            scheduled::test_job_handler().await;
+            // TODO scheduled::run_email_job(env).await
+            console_warn!("[Scheduled] ⚠️ run_email_job not implement. Just skip");
         }
         _ => {
             console_warn!("[Scheduled] ⚠️ Mismatch cron expression: {}. https://github.com/edwardzcn-decade/hacker-news-worker/tree/main?tab=readme-ov-file#scheduled-jobs", event.cron());
