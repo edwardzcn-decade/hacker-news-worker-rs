@@ -1,11 +1,12 @@
 use std::fmt::Write;
 use worker::*;
 
-use crate::api::hn::HackerNewsItem;
 use crate::config::{KV_TTL_KEY, KV_TTL_VAL, MIN_SCORE_DEFAULT, UNIX_TIME_DEFAULT};
 use crate::{
-    api::hn::fetch_top_items,
+    api::hn::{fetch_top_items, HackerNewsItem},
+    api::tg::send_message,
     kvm::{KVManager, KVMeta},
+    utils::tools::encode_base56,
 };
 
 // TODO add shards
@@ -127,7 +128,7 @@ async fn notify_tg(
         );
     }
     let story_id = payload.item_id.to_string();
-    let short_id = bs58::encode(&story_id.as_bytes()).into_string();
+    let short_id = encode_base56(payload.item_id);
 
     let cc_option = payload.decendants;
     // Comment url group
@@ -166,7 +167,7 @@ async fn notify_tg(
     // TODO Build 🔥 or ❄️
     // Build message
     let msg = build_tg_message(payload, "🦀 ", &short_story_url, &short_hn_url);
-    let res = crate::api::tg::send_message(tg_token, tg_chat_id, &msg, reply_markup).await?;
+    let res = send_message(tg_token, tg_chat_id, &msg, reply_markup).await?;
     if !(200..300).contains(&res.status_code()) {
         console_error!("[Notify] ❌ notifyTg fails. Code: {}.", &res.status_code());
         return Err(Error::RustError("failed to fetch max item".into()));

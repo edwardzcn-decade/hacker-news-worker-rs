@@ -3,6 +3,7 @@ pub mod config;
 pub mod kvm;
 pub mod router;
 pub mod scheduled;
+pub mod utils;
 
 use axum::{routing::get, Router};
 
